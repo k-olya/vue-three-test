@@ -69,9 +69,6 @@ export default defineComponent({
     // kb controls
     let kb: { [key: string]: boolean } = {}
 
-    const woodTexturePath = '/assets/wood.jpg' // put a wood.jpg into public/assets/wood.jpg
-
-
     function createRenderer(container: HTMLDivElement) {
       renderer = new THREE.WebGLRenderer({ antialias: true })
       renderer.setPixelRatio(window.devicePixelRatio)
@@ -112,8 +109,8 @@ export default defineComponent({
 
       // Floor (receives shadows)
       const textureLoader = new THREE.TextureLoader();
-      const normalMap = textureLoader.load("assets/floortile_N.jpg")
-      const colorMap = textureLoader.load("assets/floortile_S.jpg")
+      const normalMap = textureLoader.load("./assets/floortile_N.jpg")
+      const colorMap = textureLoader.load("./assets/floortile_S.jpg")
       colorMap.repeat.set(10, 10);
       colorMap.wrapS = THREE.RepeatWrapping;
       colorMap.wrapT = THREE.RepeatWrapping;
@@ -154,7 +151,7 @@ export default defineComponent({
 
       // skybox cubemap
       const cubeLoader = new THREE.CubeTextureLoader();
-      cubeLoader.setPath("/assets/");
+      cubeLoader.setPath("./assets/");
       const textureCube = cubeLoader.load( [
       	'posx.jpg', 'negx.jpg',
       	'posy.jpg', 'negy.jpg',
@@ -168,7 +165,7 @@ export default defineComponent({
       doorGroup = new THREE.Group();
       doorSize = new THREE.Vector3();
       scene.add(doorGroup);
-      loader.load("/assets/wooden_door.glb", (gltf: GLTF) => {
+      loader.load("./assets/wooden_door.glb", (gltf: GLTF) => {
           console.log(gltf)
           const model = gltf.scene
           // add shadow
