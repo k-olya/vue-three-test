@@ -31,8 +31,7 @@ import { defineComponent, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment'
+import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 
 export default defineComponent({
   name: 'ThreeDoorScene',
@@ -51,7 +50,6 @@ export default defineComponent({
     let scene: THREE.Scene
     let camera: THREE.PerspectiveCamera
     let controls: PointerLockControls
-    let pmremGenerator: THREE.PMREMGenerator
 
     // scene objects
     let doorMesh: THREE.Mesh | null = null
@@ -95,14 +93,6 @@ export default defineComponent({
       controls = new PointerLockControls(camera, renderer.domElement)
       //controls.target.set(0, 1.0, 0)
       //controls.update()
-
-      // Environment (RoomEnvironment + PMREM for good reflections)
-      pmremGenerator = new THREE.PMREMGenerator(renderer)
-      pmremGenerator.compileEquirectangularShader()
-      const roomEnv = new RoomEnvironment()
-      const envMap = pmremGenerator.fromScene(roomEnv as unknown as THREE.Scene).texture
-      scene.environment = envMap
-      scene.background = new THREE.Color(0xaaaaaa)
 
       // Light: directional for crisp shadows
       dirLight = new THREE.DirectionalLight(0xffffff, 1.0)
@@ -178,11 +168,12 @@ export default defineComponent({
       doorGroup = new THREE.Group();
       doorSize = new THREE.Vector3();
       scene.add(doorGroup);
-      loader.load("/assets/wooden_door.glb", gltf => {
+      loader.load("/assets/wooden_door.glb", (gltf: GLTF) => {
+          console.log(gltf)
           const model = gltf.scene
           // add shadow
-          model.traverse(obj => {
-	    if (obj.isMesh) {
+          model.traverse((obj: THREE.Object3D) => {
+	    if ((obj as THREE.Mesh).isMesh) {
 	      obj.castShadow = true
 	      obj.receiveShadow = true
 	    }
@@ -190,7 +181,7 @@ export default defineComponent({
           new THREE.Box3().setFromObject(model).getSize(doorSize);
           resetDoor();
           doorGroup.add(model)
-      }, undefined, err => {
+      }, undefined, (err: unknown) => {
           console.error("Error loading GLB:", err)
       })
 
@@ -201,11 +192,11 @@ export default defineComponent({
       renderer.domElement.addEventListener("click", lockControls);
     }
 
-    function onKeydown(e) {
+    function onKeydown(e: KeyboardEvent) {
       kb[e.code] = true;
     }
 
-    function onKeyup(e) {
+    function onKeyup(e: KeyboardEvent) {
       kb[e.code] = false;
     }
 
@@ -294,7 +285,7 @@ export default defineComponent({
 
     let rafId = 0
     let prevTime = 0
-    function animate(time) {
+    function animate(time?: number) {
       rafId = requestAnimationFrame(animate)
 
       // calculate delta
@@ -307,7 +298,7 @@ export default defineComponent({
       // animate torus
       geoTorus.rotation.x += 0.000375 * delta
 
-      controls.update()
+      controls.update(delta)
       renderer.render(scene, camera)
     }
 
@@ -325,7 +316,6 @@ export default defineComponent({
       renderer.domElement.removeEventListener("click", lockControls)
       cancelAnimationFrame(rafId)
       controls.dispose()
-      pmremGenerator.dispose()
       renderer.dispose()
     })
 
